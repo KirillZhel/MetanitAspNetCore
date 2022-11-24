@@ -1,3 +1,4 @@
+using Microsoft.Extensions.FileProviders;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +8,54 @@ RequestDelegate request = async (context) => await context.Response.WriteAsync("
 
 //RequestAndResponse(app);
 //Pictures(app);
-HtmlPage(app);
+//HtmlPage(app);
+//ManyHtmlPages(app);
+//DowloadFile(app);
+TestIFileInfo(app);
+
+void TestIFileInfo(WebApplication app)
+{
+	app.Run(async (context) =>
+	{
+		var fileProvider = new PhysicalFileProvider(Directory.GetCurrentDirectory());
+		var fileinfo = fileProvider.GetFileInfo("Mona.png");
+
+		context.Response.Headers.ContentDisposition = "attachment; filename=myPNGPicture.png";
+		await context.Response.SendFileAsync(fileinfo);
+	});
+}
+
+void DowloadFile(WebApplication app)
+{
+	app.Run(async (context) =>
+	{
+		context.Response.Headers.ContentDisposition = "attachment; filename=my_PNGpicture.png";
+		await context.Response.SendFileAsync("Mona.png");
+	});
+}
+
+app.Run();
+
+void ManyHtmlPages(WebApplication app)
+{
+	app.Run(async (context) =>
+	{
+		var path = context.Request.Path;
+		var fullPath = $"html/{path}";
+		var response = context.Response;
+
+		response.ContentType= "text/html; charset=utf-8";
+		if (File.Exists(fullPath))
+		{
+			await response.SendFileAsync(fullPath);
+		}
+		else
+		{
+			response.StatusCode = 404;
+			await response.WriteAsync("<h2>Not Found</h2>");
+		}
+	});
+}
 
 void HtmlPage(WebApplication app)
 {
@@ -29,13 +77,9 @@ void Pictures(WebApplication app)
 
 //app.UseWelcomePage();   // подключение WelcomePageMiddleware
 //app.Run(request);
-app.Run();
-
 
 //app.MapGet("/", () => "Hello World!");
 //app.MapGet("/lox", () => "ты лох!");
-//app.UseWelcomePage();
-
 
 //app.Start();
 //await Task.Delay(10000);
